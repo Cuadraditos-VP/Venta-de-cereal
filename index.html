@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Venta de Grano</title>
+<meta name="theme-color" content="#354418">
+<meta name="description" content="Movimiento de cereal: stock, ventas y resumen anual">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Venta Grano">
+<style>
+:root{
+  --olive:#354418; --olive-2:#4f6228; --olive-3:#76923c;
+  --khaki:#c4bd97; --khaki-2:#ddd9c3; --paper:#f4f2ea;
+  --brown:#2d2a19; --brown-2:#4a4529;
+  --ink:#1f1d12; --muted:#5b5638; --line:#b3ab82;
+  --red:#b3261e; --amber:#f2c94c; --ok:#3f6b1f;
+  --r:12px; color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--khaki);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+header{background:var(--olive);color:#f3edd2;padding:calc(18px + env(safe-area-inset-top)) 16px 18px;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+.hwrap{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header img{width:44px;height:44px;border-radius:10px}
+header h1{margin:0;font-size:clamp(20px,4vw,30px);letter-spacing:.06em;font-weight:800}
+header .sub{font-size:12px;opacity:.75;letter-spacing:.08em;text-transform:uppercase}
+.hbtns{margin-left:auto;display:flex;gap:6px}
+main{max-width:1180px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:18px}
+.btn{appearance:none;border:0;border-radius:10px;padding:10px 14px;font:600 14px system-ui,sans-serif;cursor:pointer;background:var(--olive-2);color:#fff;display:inline-flex;align-items:center;gap:6px;min-height:40px}
+.btn:hover{filter:brightness(1.08)} .btn:active{transform:translateY(1px)}
+.btn.dark{background:var(--brown)} .btn.ghost{background:transparent;color:#f3edd2;border:1px solid rgba(243,237,210,.35)}
+.btn.light{background:var(--paper);color:var(--brown);border:1px solid var(--line)}
+.btn.danger{background:var(--red)} .btn.sm{padding:6px 10px;min-height:32px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:760px){.kpis{grid-template-columns:1fr 1fr;gap:10px}.kpis .kpi{padding:12px}.kpis .kpi .v{font-size:19px;white-space:nowrap}}
+.kpi{background:var(--paper);border-radius:var(--r);padding:14px 16px;box-shadow:0 1px 0 var(--line)}
+.kpi .l{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.kpi .v{font-size:26px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi.stock{background:var(--brown);color:#f3edd2}
+.kpi.stock .l{color:#cfc79f}
+.sinstock{display:none;margin-top:6px;font-weight:900;letter-spacing:.1em;padding:4px 10px;border-radius:8px;width:max-content;animation:blink 1.2s steps(2,start) infinite}
+.sinstock.on{display:block}
+@keyframes blink{0%{background:var(--red);color:#fff}50%{background:var(--amber);color:var(--ink)}}
+
+/* panels */
+.grid{display:grid;grid-template-columns:minmax(240px,300px) 1fr;gap:18px;align-items:start}
+.col{display:grid;gap:18px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}.col{display:contents}#pVentas{order:2}#pStock{order:1}#pAnual{order:3}}
+.panel{background:var(--paper);border-radius:var(--r);overflow:hidden;box-shadow:0 2px 6px rgba(45,42,25,.15)}
+.ph{display:flex;align-items:center;gap:8px;padding:12px 14px;color:#fff;flex-wrap:wrap}
+.ph h2{margin:0;font-size:14px;letter-spacing:.08em;font-weight:800;flex:1;min-width:120px}
+.ph.brown{background:var(--brown)} .ph.olive{background:var(--olive-2)} .ph.blue{background:#3d5a80}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;text-align:center;padding:8px 10px;white-space:nowrap}
+td{padding:8px 10px;text-align:center;white-space:nowrap;border-bottom:1px solid #e3dfcc}
+.t-brown th{background:var(--brown-2);color:#f3edd2}
+.t-olive th{background:var(--olive-3);color:#fff}
+.t-blue th{background:#5b7ba3;color:#fff}
+tbody tr:nth-child(even) td{background:#ebe8da}
+tfoot td{font-weight:800;border:0}
+.t-brown tfoot td{background:var(--brown);color:#f3edd2}
+.t-olive tfoot td{background:var(--olive-2);color:#fff}
+.t-blue tfoot td{background:#3d5a80;color:#fff}
+td.num,th.num{text-align:right}
+.empty td{color:var(--muted);font-style:italic;background:transparent!important;padding:18px}
+tr.last td{box-shadow:inset 0 -2px 0 var(--olive-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;background:#ebe8da;border-bottom:1px solid #ddd8c2}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:4px 12px;font:600 13px system-ui;cursor:pointer;color:var(--brown)}
+.chip.on{background:var(--olive-2);color:#fff;border-color:var(--olive-2)}
+.bars{padding:14px}
+.bar{display:grid;grid-template-columns:48px 1fr auto;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.bar .tr{height:14px;background:#e3dfcc;border-radius:7px;overflow:hidden}
+.bar .fi{height:100%;background:var(--olive-3);border-radius:7px}
+.foot{font-size:12px;color:var(--muted);text-align:center}
+
+/* dialogs */
+dialog{border:0;border-radius:16px;padding:0;width:min(440px,calc(100vw - 32px));background:var(--paper);color:var(--ink);box-shadow:0 20px 50px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(31,29,18,.55)}
+.dh{padding:14px 18px;color:#fff;font-weight:800;letter-spacing:.06em;display:flex;align-items:center}
+.dh .x{margin-left:auto;background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}
+.db{padding:16px 18px;display:grid;gap:12px}
+.db label{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.db input{font:16px system-ui;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+.db input:focus{outline:2px solid var(--olive-3);border-color:transparent}
+.db .hint{font-size:12px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.avail{background:var(--brown);color:#f3edd2;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.avail b{font-size:20px}
+.preview{background:#ebe8da;border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:2px}
+.err{color:var(--red);font-weight:700;font-size:13px;min-height:1em;white-space:pre-line}
+.da{display:flex;gap:8px;justify-content:flex-end;padding:0 18px 16px;flex-wrap:wrap}
+.msg{white-space:pre-line}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;visibility:hidden;background:var(--brown);color:#f3edd2;padding:10px 16px;border-radius:10px;font-weight:600;transition:transform .25s,opacity .25s,visibility .25s;z-index:9;max-width:calc(100vw - 32px)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible}
+.menu{position:relative}
+.menu-list{position:absolute;right:0;top:calc(100% + 6px);background:var(--paper);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:6px;display:none;min-width:220px;z-index:5}
+.menu-list.open{display:block}
+.menu-list button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;font:500 14px system-ui;color:var(--ink);cursor:pointer}
+.menu-list button:hover{background:#ebe8da}
+.menu-list hr{border:0;border-top:1px solid #e3dfcc;margin:4px 0}
+.menu-list .red{color:var(--red)}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <img src="icons/icon-192.png" alt="">
+    <div>
+      <h1>MOVIMIENTO DE CEREAL</h1>
+      <div class="sub">Stock · Ventas · Resumen anual</div>
+    </div>
+    <div class="hbtns">
+      <button class="btn" id="bVender">＋ Venta</button>
+      <div class="menu">
+        <button class="btn ghost" id="bMenu" aria-label="Más opciones">⋯</button>
+        <div class="menu-list" id="menu">
+          <button data-act="exportJson">⬇ Guardar respaldo (JSON)</button>
+          <button data-act="importJson">⬆ Restaurar respaldo</button>
+          <button data-act="exportCsv">⬇ Exportar ventas a Excel (CSV)</button>
+          <hr>
+          <button data-act="borrarTodo" class="red">🗑 Borrar todo…</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="kpis">
+    <div class="kpi stock">
+      <div class="l">Stock disponible</div>
+      <div class="v" id="kStock">0 quintales</div>
+      <div class="sinstock" id="kSin">SIN STOCK</div>
+    </div>
+    <div class="kpi"><div class="l">Ingresado</div><div class="v" id="kIng">0 q</div></div>
+    <div class="kpi"><div class="l">Vendido</div><div class="v" id="kVen">0 q</div></div>
+    <div class="kpi"><div class="l">Total vendido USD</div><div class="v" id="kUsd">USD 0</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="col">
+    <!-- INGRESO DE STOCK (Tabla3) -->
+    <div class="panel" id="pStock">
+      <div class="ph brown">
+        <h2>INGRESO DE STOCK</h2>
+        <button class="btn sm light" id="bCargar">＋ Cargar</button>
+        <button class="btn sm light" id="bBorrarStock" title="Borrar último ingreso">↶</button>
+      </div>
+      <div class="tw">
+        <table class="t-brown">
+          <thead><tr><th>Fecha</th><th class="num">Cantidad</th></tr></thead>
+          <tbody id="tbStock"></tbody>
+          <tfoot><tr><td>Total</td><td class="num" id="ftStock">0 q</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- VENTAS ANUALES (Tabla2) -->
+    <div class="panel" id="pAnual">
+      <div class="ph blue"><h2>VENTAS ANUALES</h2></div>
+      <div class="tw">
+        <table class="t-blue">
+          <thead><tr><th>Año</th><th class="num">Cantidad</th><th class="num">Importe</th></tr></thead>
+          <tbody id="tbAnual"></tbody>
+          <tfoot><tr><td>Total</td><td class="num" id="faCant"></td><td class="num" id="faUsd"></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="bars" id="bars"></div>
+    </div>
+    </div>
+    <!-- VENTAS (Tabla1) -->
+    <div class="panel" id="pVentas">
+      <div class="ph olive">
+        <h2>VENTAS</h2>
+        <button class="btn sm light" id="bVender2">＋ Registrar venta</button>
+        <button class="btn sm light" id="bBorrarVenta" title="Borrar última venta">↶</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="tw">
+        <table class="t-olive">
+          <thead><tr>
+            <th>Fecha</th><th class="num">Cantidad</th><th class="num">Precio tn.</th>
+            <th class="num">Total</th><th class="num">Cot. dólar</th><th class="num">Total dólares</th>
+          </tr></thead>
+          <tbody id="tbVentas"></tbody>
+          <tfoot><tr>
+            <td>Total</td><td class="num" id="fvCant"></td><td class="num" id="fvPrecio" title="Precio promedio ponderado"></td>
+            <td class="num" id="fvTotal"></td><td class="num" id="fvCot" title="Cotización implícita = Total / Total dólares"></td><td class="num" id="fvUsd"></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+  <p class="foot">Los datos se guardan en este dispositivo. Hacé un respaldo de vez en cuando desde el menú ⋯</p>
+</main>
+
+<!-- Registrar venta -->
+<dialog id="dVenta">
+  <form method="dialog" id="fVenta" novalidate>
+    <div class="dh" style="background:var(--olive-2)">REGISTRAR VENTA<button class="x" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
+    <div class="db">
+      <div class="avail"><span>Stock disponible</span><b id="vDisp">0 q</b></div>
+      <label>Fecha<input type="date" id="vFecha" required></label>
+      <div class="row2">
+        <label>Cantidad (q)<input type="number" id="vCant" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+        <label>Precio tn. ($ K)<input type="number" id="vPrecio" inputmode="decimal" min="0" step="any" placeholder="ej: 250"></label>
+      </div>
+      <label>Cotización dólar ($)<input type="number" id="vCot" inputmode="decimal" min="0" step="any" placeholder="ej: 1200"></label>
+      <div class="preview" id="vPrev"></div>
+      <div class="err" id="vErr"></div>
+    </div>
+    <div class="da">
+      <button class="btn light" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" id="vOk" value="ok">Registrar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Cargar stock -->
+<dialog id="dStock">
+  <form method="dialog" id="fStock" novalidate>
+    <div class="dh" style="background:var(--brown)">INGRESO DE STOCK<button class="x" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
+    <div class="db">
+      <label>Fecha<input type="date" id="sFecha"></label>
+      <label>Cantidad (q)<input type="number" id="sCant" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+      <div class="err" id="sErr"></div>
+    </div>
+    <div class="da">
+      <button class="btn light" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn dark" value="ok">Cargar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Confirmación / contraseña genérica -->
+<dialog id="dAsk">
+  <form method="dialog" id="fAsk">
+    <div class="dh" id="aHead" style="background:var(--brown)"><span id="aTitle"></span></div>
+    <div class="db">
+      <div class="msg" id="aMsg"></div>
+      <label id="aPassWrap">Contraseña<input type="password" id="aPass" inputmode="numeric" autocomplete="off"></label>
+      <div class="err" id="aErr"></div>
+    </div>
+    <div class="da">
+      <button class="btn light" value="cancel" id="aNo">Cancelar</button>
+      <button class="btn" value="ok" id="aYes">Aceptar</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="fileIn" accept="application/json,.json" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const CLAVE = '1318';
+const KEY = 'ventaGrano.v1';
+const $ = id => document.getElementById(id);
+
+/* ---------- datos ---------- */
+const SEED = { stock: [{ fecha: '2026-04-14', cant: 1356 }], ventas: [] };
+let db;
+function load(){
+  try { const raw = localStorage.getItem(KEY); db = raw ? JSON.parse(raw) : structuredClone(SEED); }
+  catch { db = structuredClone(SEED); }
+  db.stock ||= []; db.ventas ||= [];
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { toast('No se pudo guardar en este navegador'); } }
+
+/* ---------- formatos (como en el Excel) ---------- */
+const nf0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nfq = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+const fQ   = v => nfq.format(v) + ' q';                       // 0 "q"
+const fK   = v => '$ ' + nf0.format(v) + ' K';                // "$" #,##0 "K"
+const fM   = v => '$ ' + nf2.format(v / 1e6) + ' M';          // "$" #,##0.00,, "M"
+const fP   = v => '$ ' + nf0.format(v);                       // "$" #,##0
+const fUSD = v => 'USD ' + nf0.format(v);                     // [$USD] #,##0
+const fD   = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
+const today = () => { const t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0,10); };
+
+/* ---------- cálculos (fórmulas del Excel) ---------- */
+const total = v => v.cant * v.precio * 100;                   // CANTIDAD*PRECIO tn.*100
+const usd   = v => v.cot ? total(v) / v.cot : 0;              // TOTAL / Cot. DÓLAR
+const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
+const stockIngresado = () => sum(db.stock, s => s.cant);
+const stockVendido   = () => sum(db.ventas, v => v.cant);
+const stockDisp      = () => Math.round((stockIngresado() - stockVendido()) * 1e6) / 1e6;  // F9
+
+/* ---------- render ---------- */
+let filtroAnio = 'todos';
+function render(){
+  const disp = stockDisp();
+  $('kStock').textContent = nf0.format(disp) + ' quintales';
+  $('kSin').classList.toggle('on', disp <= 0);
+  $('kIng').textContent = fQ(stockIngresado());
+  $('kVen').textContent = fQ(stockVendido());
+  $('kUsd').textContent = fUSD(sum(db.ventas, usd));
+
+  // Stock
+  $('tbStock').innerHTML = db.stock.length
+    ? db.stock.map((s,i) => `<tr${i===db.stock.length-1?' class="last"':''}><td>${fD(s.fecha)}</td><td class="num">${fQ(s.cant)}</td></tr>`).join('')
+    : '<tr class="empty"><td colspan="2">Sin ingresos</td></tr>';
+  $('ftStock').textContent = fQ(stockIngresado());
+  $('bBorrarStock').disabled = !db.stock.length;
+
+  // Años
+  const anios = [...new Set(db.ventas.map(v => +v.fecha.slice(0,4)))].sort();
+  if (filtroAnio !== 'todos' && !anios.includes(filtroAnio)) filtroAnio = 'todos';
+  $('chips').innerHTML = ['todos', ...anios].map(a =>
+    `<button class="chip${a===filtroAnio?' on':''}" data-a="${a}">${a==='todos'?'Todos':a}</button>`).join('');
+  $('chips').style.display = anios.length > 1 ? '' : 'none';
+
+  // Ventas
+  const vs = db.ventas.map((v,i) => ({...v, i})).filter(v => filtroAnio === 'todos' || +v.fecha.slice(0,4) === filtroAnio);
+  const lastIdx = db.ventas.length - 1;
+  $('tbVentas').innerHTML = vs.length
+    ? vs.map(v => `<tr${v.i===lastIdx?' class="last"':''}><td>${fD(v.fecha)}</td><td class="num">${fQ(v.cant)}</td><td class="num">${fK(v.precio)}</td><td class="num">${fM(total(v))}</td><td class="num">${fP(v.cot)}</td><td class="num">${fUSD(usd(v))}</td></tr>`).join('')
+    : '<tr class="empty"><td colspan="6">Todavía no hay ventas registradas</td></tr>';
+  const tCant = sum(vs, v => v.cant), tTot = sum(vs, total), tUsd = sum(vs, usd);
+  $('fvCant').textContent = fQ(tCant);
+  $('fvPrecio').textContent = tCant ? fK(sum(vs, v => v.cant * v.precio) / tCant) + ' prom.' : '';
+  $('fvTotal').textContent = fM(tTot);
+  $('fvCot').textContent = tUsd ? fP(tTot / tUsd) : '';
+  $('fvUsd').textContent = fUSD(tUsd);
+  $('bBorrarVenta').disabled = !db.ventas.length;
+
+  // Anual (SUMIF por año)
+  const filas = anios.map(a => {
+    const va = db.ventas.filter(v => +v.fecha.slice(0,4) === a);
+    return { a, cant: sum(va, v => v.cant), usd: sum(va, usd) };
+  });
+  $('tbAnual').innerHTML = filas.length
+    ? filas.map(f => `<tr><td>${f.a}</td><td class="num">${fQ(f.cant)}</td><td class="num">${fUSD(f.usd)}</td></tr>`).join('')
+    : '<tr class="empty"><td colspan="3">Sin ventas</td></tr>';
+  $('faCant').textContent = fQ(sum(filas, f => f.cant));
+  $('faUsd').textContent = fUSD(sum(filas, f => f.usd));
+  const max = Math.max(1, ...filas.map(f => f.usd));
+  $('bars').innerHTML = filas.map(f =>
+    `<div class="bar"><span>${f.a}</span><div class="tr"><div class="fi" style="width:${(f.usd/max*100).toFixed(1)}%"></div></div><span>${fUSD(f.usd)}</span></div>`).join('');
+  $('bars').style.display = filas.length > 1 ? '' : 'none';
+}
+
+/* ---------- utilidades UI ---------- */
+let tT;
+function toast(t){ const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => e.classList.remove('show'), 2400); }
+
+// Diálogo genérico: confirm / password / alert
+function ask({ title, msg = '', pass = false, ok = 'Aceptar', cancel = 'Cancelar', danger = false, alertOnly = false }){
+  return new Promise(res => {
+    const d = $('dAsk');
+    $('aTitle').textContent = title; $('aMsg').textContent = msg;
+    $('aHead').style.background = danger ? 'var(--red)' : 'var(--brown)';
+    $('aPassWrap').style.display = pass ? '' : 'none';
+    $('aPass').value = ''; $('aErr').textContent = '';
+    $('aYes').textContent = ok; $('aYes').className = 'btn' + (danger ? ' danger' : '');
+    $('aNo').textContent = cancel; $('aNo').style.display = alertOnly ? 'none' : '';
+    const onClose = () => {
+      d.removeEventListener('close', onClose);
+      if (d.returnValue !== 'ok') return res(false);
+      if (pass && $('aPass').value !== CLAVE) { toast('Contraseña incorrecta'); return res(false); }
+      res(true);
+    };
+    d.addEventListener('close', onClose);
+    d.returnValue = ''; d.showModal();
+    setTimeout(() => (pass ? $('aPass') : $('aYes')).focus(), 50);
+  });
+}
+const pedirClave = (title, msg) => ask({ title, msg: msg || 'Ingresá la contraseña para continuar.', pass: true });
+
+/* ---------- Registrar venta (cmdReg_Click) ---------- */
+function abrirVenta(){
+  const disp = stockDisp();
+  if (disp <= 0) { ask({ title: 'SIN STOCK', msg: 'No hay stock disponible. Cargá un ingreso de stock primero.', alertOnly: true, ok: 'Entendido' }); return; }
+  $('vDisp').textContent = nf0.format(disp) + ' q';
+  $('vFecha').value = today(); $('vCant').value = ''; $('vPrecio').value = ''; $('vCot').value = '';
+  const ult = db.ventas.at(-1); if (ult) $('vCot').placeholder = 'última: ' + nf0.format(ult.cot);
+  $('vErr').textContent = ''; prevVenta();
+  $('dVenta').showModal(); setTimeout(() => $('vCant').focus(), 50);
+}
+function leerVenta(){
+  return { fecha: $('vFecha').value, cant: parseFloat($('vCant').value), precio: parseFloat($('vPrecio').value), cot: parseFloat($('vCot').value) };
+}
+function prevVenta(){
+  const v = leerVenta();
+  if (v.cant > 0 && v.precio > 0) {
+    $('vPrev').innerHTML = `<span>Total: <b>${fM(total(v))}</b> (${fP(total(v))})</span>` + (v.cot > 0 ? `<span>En dólares: <b>${fUSD(usd(v))}</b></span>` : '');
+    $('vPrev').style.display = '';
+  } else $('vPrev').style.display = 'none';
+}
+function validarVenta(v){
+  if (!v.fecha) return ['vFecha', 'La fecha es obligatoria.'];
+  if (!$('vCant').value) return ['vCant', 'La cantidad es obligatoria.'];
+  if (!$('vPrecio').value) return ['vPrecio', 'El precio es obligatorio.'];
+  if (!$('vCot').value) return ['vCot', 'La cotización es obligatoria.'];
+  if (!isFinite(v.cant)) return ['vCant', 'La cantidad debe ser un número válido.'];
+  if (v.cant <= 0) return ['vCant', 'La cantidad debe ser mayor a 0.'];
+  if (!(v.precio > 0)) return ['vPrecio', 'El precio debe ser mayor a 0.'];
+  if (!(v.cot > 0)) return ['vCot', 'La cotización debe ser mayor a 0.'];
+  const disp = stockDisp();
+  if (v.cant > disp) return ['vCant', `No hay stock suficiente.\nSolicitado: ${nfq.format(v.cant)}\nDisponible: ${nfq.format(disp)}`];
+  const ult = db.ventas.at(-1);
+  if (ult && v.fecha < ult.fecha) return ['vFecha', `No se permite una fecha anterior a la última registrada.\nÚltima fecha: ${fD(ult.fecha)}\nIntentaste: ${fD(v.fecha)}`];
+  return null;
+}
+$('fVenta').addEventListener('input', prevVenta);
+$('fVenta').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'ok') return;
+  const v = leerVenta(), err = validarVenta(v);
+  if (err) { e.preventDefault(); $('vErr').textContent = err[1]; $(err[0]).focus(); return; }
+  db.ventas.push(v); save(); render(); toast('Venta registrada');
+});
+
+/* ---------- Cargar stock (cmdCargar_Click, con clave) ---------- */
+async function abrirStock(){
+  if (!await pedirClave('INGRESO DE STOCK')) return;
+  $('sFecha').value = today(); $('sCant').value = ''; $('sErr').textContent = '';
+  $('dStock').showModal(); setTimeout(() => $('sCant').focus(), 50);
+}
+$('fStock').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'ok') return;
+  const fecha = $('sFecha').value, cant = parseFloat($('sCant').value);
+  const fail = (id, m) => { e.preventDefault(); $('sErr').textContent = m; $(id).focus(); };
+  if (!fecha) return fail('sFecha', 'La fecha es obligatoria.');
+  if (!$('sCant').value) return fail('sCant', 'Debés ingresar un valor.');
+  if (!(cant > 0)) return fail('sCant', 'La cantidad debe ser mayor a 0.');
+  db.stock.push({ fecha, cant }); save(); render(); toast('Stock cargado');
+});
+
+/* ---------- Borrados ---------- */
+async function borrarUltimaVenta(){
+  const u = db.ventas.at(-1); if (!u) return;
+  if (!await ask({ title: 'CONFIRMAR BORRADO', msg: `¿Borrar la última venta?\n${fD(u.fecha)} · ${fQ(u.cant)} · ${fUSD(usd(u))}`, ok: 'Borrar', danger: true })) return;
+  db.ventas.pop(); save(); render(); toast('Venta eliminada');
+}
+async function borrarUltimoStock(){
+  const u = db.stock.at(-1); if (!u) return;
+  if (stockDisp() - u.cant < 0) {
+    ask({ title: 'NO SE PUEDE BORRAR', msg: `Si borrás este ingreso (${fQ(u.cant)}) el stock quedaría negativo, porque ya hay ventas que lo usan.`, alertOnly: true, ok: 'Entendido' });
+    return;
+  }
+  if (!await pedirClave('BORRAR ÚLTIMO INGRESO', `Se borrará: ${fD(u.fecha)} · ${fQ(u.cant)}\nIngresá la contraseña.`)) return;
+  db.stock.pop(); save(); render(); toast('Ingreso eliminado');
+}
+async function borrarTodo(){
+  if (!await ask({ title: 'BORRAR TODO', msg: '¿Estás seguro de borrar TODOS los datos de stock y ventas?\nTe conviene guardar un respaldo antes.', ok: 'Sí, continuar', danger: true })) return;
+  if (!await pedirClave('BORRAR TODO')) return;
+  db = { stock: [], ventas: [] }; save(); render(); toast('Datos eliminados');
+}
+
+/* ---------- Respaldo ---------- */
+function descargar(nombre, contenido, tipo){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([contenido], { type: tipo }));
+  a.download = nombre; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function exportJson(){ descargar(`venta-grano-${today()}.json`, JSON.stringify(db, null, 2), 'application/json'); }
+function exportCsv(){
+  const n = x => String(Math.round(x * 100) / 100).replace('.', ',');
+  const rows = [['FECHA','CANTIDAD (q)','PRECIO tn. ($K)','TOTAL ($)','Cot. DÓLAR','TOTAL DÓLARES']]
+    .concat(db.ventas.map(v => [fD(v.fecha), n(v.cant), n(v.precio), n(total(v)), n(v.cot), n(usd(v))]));
+  rows.push([], ['INGRESO DE STOCK'], ['FECHA','CANTIDAD (q)'], ...db.stock.map(s => [fD(s.fecha), n(s.cant)]));
+  descargar(`venta-grano-${today()}.csv`, '﻿' + rows.map(r => r.join(';')).join('\r\n'), 'text/csv');
+}
+$('fileIn').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    const okFecha = s => /^\d{4}-\d{2}-\d{2}$/.test(s);
+    if (!Array.isArray(d.stock) || !Array.isArray(d.ventas)
+      || !d.stock.every(s => okFecha(s.fecha) && isFinite(s.cant))
+      || !d.ventas.every(v => okFecha(v.fecha) && isFinite(v.cant) && isFinite(v.precio) && isFinite(v.cot))) throw 0;
+    if (!await ask({ title: 'RESTAURAR RESPALDO', msg: `Se reemplazarán los datos actuales por:\n${d.stock.length} ingresos de stock y ${d.ventas.length} ventas.`, ok: 'Restaurar' })) return;
+    db = { stock: d.stock.map(s => ({ fecha: s.fecha, cant: +s.cant })), ventas: d.ventas.map(v => ({ fecha: v.fecha, cant: +v.cant, precio: +v.precio, cot: +v.cot })) };
+    save(); render(); toast('Respaldo restaurado');
+  } catch { ask({ title: 'ARCHIVO NO VÁLIDO', msg: 'Ese archivo no es un respaldo de esta app.', alertOnly: true, ok: 'Cerrar' }); }
+});
+
+/* ---------- eventos ---------- */
+$('bVender').onclick = abrirVenta; $('bVender2').onclick = abrirVenta;
+$('bCargar').onclick = abrirStock;
+$('bBorrarVenta').onclick = borrarUltimaVenta;
+$('bBorrarStock').onclick = borrarUltimoStock;
+$('chips').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; filtroAnio = b.dataset.a === 'todos' ? 'todos' : +b.dataset.a; render(); };
+const menu = $('menu');
+$('bMenu').onclick = e => { e.stopPropagation(); menu.classList.toggle('open'); };
+document.addEventListener('click', () => menu.classList.remove('open'));
+menu.onclick = e => {
+  const a = e.target.closest('button')?.dataset.act; if (!a) return;
+  menu.classList.remove('open');
+  ({ exportJson, exportCsv, borrarTodo, importJson: () => $('fileIn').click() })[a]();
+};
+// Atajo como en el Excel: Ctrl+W abre/cierra el formulario de venta → acá usamos Alt+V
+document.addEventListener('keydown', e => { if (e.altKey && e.key.toLowerCase() === 'v') { e.preventDefault(); $('dVenta').open ? $('dVenta').close() : abrirVenta(); } });
+
+load(); render();
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+})();
+</script>
+</body>
+</html>

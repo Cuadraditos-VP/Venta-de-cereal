@@ -1,0 +1,16 @@
+{
+  "name": "Venta de Grano · Movimiento de cereal",
+  "short_name": "Venta Grano",
+  "description": "Stock, ventas y resumen anual de cereal",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#c4bd97",
+  "theme_color": "#354418",
+  "lang": "es-AR",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
