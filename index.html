@@ -46,8 +46,9 @@ main{max-width:1180px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:18px
 .kpi .v{font-size:26px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
 .kpi.stock{background:var(--brown);color:#f3edd2}
 .kpi.stock .l{color:#cfc79f}
-.sinstock{display:none;margin-top:6px;font-weight:900;letter-spacing:.1em;padding:4px 10px;border-radius:8px;width:max-content;animation:blink 1.2s steps(2,start) infinite}
+.sinstock{display:none;margin-top:6px;font-weight:900;letter-spacing:.1em;padding:4px 10px;border-radius:8px;width:max-content;background:var(--red);color:#fff}
 .sinstock.on{display:block}
+.sinstock.blink{animation:blink 1s steps(2,start) 5}
 @keyframes blink{0%{background:var(--red);color:#fff}50%{background:var(--amber);color:var(--ink)}}
 
 /* panels */
@@ -119,7 +120,6 @@ dialog::backdrop{background:rgba(31,29,18,.55)}
       <div class="sub">Stock · Ventas · Resumen anual</div>
     </div>
     <div class="hbtns">
-      <button class="btn" id="bVender">＋ Venta</button>
       <div class="menu">
         <button class="btn ghost" id="bMenu" aria-label="Más opciones">⋯</button>
         <div class="menu-list" id="menu">
@@ -302,7 +302,9 @@ let filtroAnio = 'todos';
 function render(){
   const disp = stockDisp();
   $('kStock').textContent = nf0.format(disp) + ' quintales';
-  $('kSin').classList.toggle('on', disp <= 0);
+  const sin = $('kSin'), estaba = sin.classList.contains('on');
+  sin.classList.toggle('on', disp <= 0);
+  if (disp <= 0 && !estaba) { sin.classList.remove('blink'); void sin.offsetWidth; sin.classList.add('blink'); }  // titila 5 veces y queda fijo en rojo
   $('kIng').textContent = fQ(stockIngresado());
   $('kVen').textContent = fQ(stockVendido());
   $('kUsd').textContent = fUSD(sum(db.ventas, usd));
@@ -488,7 +490,7 @@ $('fileIn').addEventListener('change', async e => {
 });
 
 /* ---------- eventos ---------- */
-$('bVender').onclick = abrirVenta; $('bVender2').onclick = abrirVenta;
+$('bVender2').onclick = abrirVenta;
 $('bCargar').onclick = abrirStock;
 $('bBorrarVenta').onclick = borrarUltimaVenta;
 $('bBorrarStock').onclick = borrarUltimoStock;
